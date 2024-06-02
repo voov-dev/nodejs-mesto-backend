@@ -30,6 +30,21 @@ const userSchema = new Schema<User>({
       message: 'Invalid URL',
     },
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    validate(value: string) {
+      if (!validator.isEmail(value)) throw new Error('Invalid Email');
+    },
+  },
+  password: {
+    type: String,
+    required: true,
+    trim: true,
+    select: false,
+  },
 });
 
 export default model<User>('user', userSchema);
