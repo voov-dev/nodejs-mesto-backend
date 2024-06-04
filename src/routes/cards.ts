@@ -1,11 +1,19 @@
 import { Router } from 'express';
 
-import controller from '../controllers/cards';
+import { createCard, deleteCardById, dislikeCard, getAllCards, likeCard } from '../controllers/cards';
+import {
+  createCardVerifyRequest,
+  deleteCardVerifyRequest,
+  dislikeCardVerifyRequest,
+  likeCardVerifyRequest,
+} from '../validators/cardsValidation';
 
-const cardRouter = Router();
+const cardsRouter = Router();
 
-cardRouter.post('/', controller.createCard);
-cardRouter.get('/', controller.getAllCards);
-cardRouter.delete('/:cardId', controller.deleteCardById);
+cardsRouter.get('/', getAllCards);
+cardsRouter.post('/', createCardVerifyRequest, createCard);
+cardsRouter.delete('/:cardId', deleteCardVerifyRequest, deleteCardById);
+cardsRouter.put('/:cardId/likes', likeCardVerifyRequest, likeCard);
+cardsRouter.delete('/:cardId/likes', dislikeCardVerifyRequest, dislikeCard);
 
-export default cardRouter;
+export default cardsRouter;

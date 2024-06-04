@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
-import { Error } from 'mongoose';
+import { Error, ObjectId } from 'mongoose';
 
 import BadRequestError from '../common/BadRequestError';
 import { HTTP_STATUS_CODE } from '../common/enums/httpStatusCode';
+import { AuthenticatedRequest } from '../common/types/AuthenticatedRequest';
 import Card from '../models/card';
 
-const getAllCards = async (req: Request, res: Response, next: NextFunction) => {
+export const getAllCards = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const cards = await Card.find({}).populate(['owner', 'likes']);
 
@@ -15,7 +16,7 @@ const getAllCards = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const createCard = async (req: Request, res: Response, next: NextFunction) => {
+export const createCard = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, link } = req.body;
     const owner = req.params.cardId;
@@ -29,7 +30,7 @@ const createCard = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-const deleteCardById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteCardById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { cardId } = req.params;
     const cardToDelete = await Card.findById(cardId).orFail();
@@ -45,8 +46,45 @@ const deleteCardById = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export default {
-  getAllCards,
-  createCard,
-  deleteCardById,
+export const likeCard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const { cardId } = req.params;
+  const owner = req.user?._id;
+
+  try {
+    const updatedCard = await Card.findByIdAndUpdate(
+      cardId,
+      {
+        $addToSet: { likes: owner },
+      },
+      { new: true },
+    );
+    if (!updatedCard) throw new BadRequestError('Карточка не найдена');
+
+    return res.status(HTTP_STATUS_CODE.SUCCESS).send(updatedCard);
+  } catch (err: any) {
+    if (err.name === 'CastError') throw new BadRequestError('Некорректные данные');
+    else next(err);
+  }
+};
+
+export const dislikeCard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const { cardId } = req.params;
+  const owner = req.user?._id;
+
+  try {
+    const updatedCard = await Card.findByIdAndUpdate(
+      cardId,
+      {
+        $pull: { likes: owner as unknown as ObjectId },
+      },
+      { new: true },
+    );
+
+    if (!updatedCard) throw new BadRequestError('Карточка не найдена');
+
+    return res.status(HTTP_STATUS_CODE.SUCCESS).send(updatedCard);
+  } catch (err: any) {
+    if (err.name === 'ValidationError') throw new BadRequestError('Некорректные данные');
+    else next(err);
+  }
 };

@@ -8,7 +8,7 @@ import { requestLogger } from './middlewares/requestLogger';
 import routes from './routes';
 import { createUserVerifyRequest, loginUserVerifyRequest } from './validators/userValidation';
 
-const { PORT = 3000, MONGODB_DEV = 'mongodb://127.0.0.1:27017' } = process.env;
+const { PORT = 3000, MONGODB_DEV = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 const app = express();
 
 app.use(json());
