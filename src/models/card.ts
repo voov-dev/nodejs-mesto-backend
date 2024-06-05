@@ -20,7 +20,7 @@ const cardSchema = new Schema<Card>({
           require_tld: true,
           require_protocol: true,
         }),
-      message: 'Invalid URL',
+      message: 'Недопустимый URL-адрес',
     },
   },
   owner: {

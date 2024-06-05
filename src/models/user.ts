@@ -27,7 +27,7 @@ const userSchema = new Schema<User>({
           require_tld: true,
           require_protocol: true,
         }),
-      message: 'Invalid URL',
+      message: 'Недопустимый URL-адрес',
     },
   },
   email: {
@@ -36,7 +36,7 @@ const userSchema = new Schema<User>({
     unique: true,
     trim: true,
     validate(value: string) {
-      if (!validator.isEmail(value)) throw new Error('Invalid Email');
+      if (!validator.isEmail(value)) throw new Error('Недействительный адрес электронной почты');
     },
   },
   password: {

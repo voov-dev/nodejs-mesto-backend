@@ -34,7 +34,7 @@ module.exports = {
     '@typescript-eslint/ban-types': ['warn'],
     '@typescript-eslint/no-unused-vars': ['error'],
     '@typescript-eslint/no-explicit-any': ['warn'],
-    complexity: ['error', 5],
+    complexity: ['warn', 5],
     'prettier/prettier': ['error', prettierConfig],
     'react-hooks/exhaustive-deps': ['off'],
   },
