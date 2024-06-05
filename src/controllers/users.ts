@@ -5,14 +5,11 @@ import mongoose from 'mongoose';
 
 import BadRequestError from '../common/BadRequestError';
 import { DEFAULT_USER } from '../common/constants/defaultUser';
-import { SALT_ROUNDS } from '../common/constants/saltRounds';
 import { HTTP_STATUS_CODE } from '../common/enums/httpStatusCode';
 import { AuthenticatedRequest } from '../common/types/AuthenticatedRequest';
 import User from '../models/user';
 
-const {
-  JWT_SECRET = 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJleHAiOjE4NDM1Nzk0ODEsImlhdCI6MTcxNzM0OTA4MX0.XDHPxtgr_NX8qkaJp2f2-jFo_xY4uGpt0QiO9mIT-HM',
-} = process.env;
+const { JWT_SECRET = '', SALT_ROUNDS = 12 } = process.env;
 
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -20,7 +17,7 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(users);
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
@@ -32,7 +29,7 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(user);
   } catch (error: any) {
-    if (error.name === 'CastError') return next(new BadRequestError('Некорректный id'));
+    if (error.name === 'CastError') throw new BadRequestError('Некорректный id');
 
     return next(error);
   }
@@ -61,10 +58,9 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     });
   } catch (error: any) {
     if (error.name === 'MongoError' && error.code === 11000)
-      return next(new BadRequestError('Пользователь с таким почтовым адресом уже существует'));
+      throw new BadRequestError('Такой Email уже зарегистрирован');
 
-    if (error instanceof mongoose.Error.ValidationError)
-      return next(new BadRequestError('Ошибка в данных пользователя'));
+    if (error instanceof mongoose.Error.ValidationError) throw new BadRequestError('Ошибка в данных пользователя');
 
     return next(error);
   }
@@ -106,7 +102,8 @@ export const getUserData = async (req: AuthenticatedRequest, res: Response, next
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(currentUser);
   } catch (err: any) {
     if (err.name === 'CastError') throw new BadRequestError('Некорректные данные пользователя');
-    else next(err);
+
+    return next(err);
   }
 };
 
@@ -129,7 +126,8 @@ export const updateUserInfo = async (req: AuthenticatedRequest, res: Response, n
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(updatedUser);
   } catch (err: any) {
     if (err.name === 'ValidationError') throw new BadRequestError('Некорректные данные пользователя');
-    else next(err);
+
+    return next(err);
   }
 };
 
@@ -152,6 +150,7 @@ export const updateUserAvatar = async (req: AuthenticatedRequest, res: Response,
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(updatedUser);
   } catch (err: any) {
     if (err.name === 'ValidationError') throw new BadRequestError('Некорректные данные пользователя');
-    else next(err);
+
+    return next(err);
   }
 };

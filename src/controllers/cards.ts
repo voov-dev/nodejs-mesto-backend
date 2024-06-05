@@ -24,23 +24,28 @@ export const createCard = async (req: Request, res: Response, next: NextFunction
 
     return res.status(HTTP_STATUS_CODE.SUCCESS).json({ data: card });
   } catch (error) {
-    if (error instanceof Error.ValidationError) return next(new BadRequestError('Ошибка при вводе данных'));
+    if (error instanceof Error.ValidationError) throw new BadRequestError('Ошибка при вводе данных');
 
     return next(error);
   }
 };
 
-export const deleteCardById = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteCardById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { cardId } = req.params;
-    const cardToDelete = await Card.findById(cardId).orFail();
-    const deleteCard = await cardToDelete.deleteOne();
+    const card = await Card.findById(cardId).orFail();
+
+    if (!card) throw new BadRequestError('Не существует карточки с указанным id');
+
+    if (String(card.owner) !== req.user?._id) throw new BadRequestError('Нельзя удалять чужие карточки');
+
+    const deleteCard = await card.deleteOne();
 
     return res.status(HTTP_STATUS_CODE.NOT_FOUND).json({ data: deleteCard });
   } catch (error) {
-    if (error instanceof Error.DocumentNotFoundError) return next(new BadRequestError('Карточка другого пользователя'));
+    if (error instanceof Error.DocumentNotFoundError) throw new BadRequestError('Карточка другого пользователя');
 
-    if (error instanceof Error.CastError) return next(new BadRequestError('Не верный ID пользователя'));
+    if (error instanceof Error.CastError) throw new BadRequestError('Не верный ID пользователя');
 
     return next(error);
   }
@@ -58,12 +63,14 @@ export const likeCard = async (req: AuthenticatedRequest, res: Response, next: N
       },
       { new: true },
     );
+
     if (!updatedCard) throw new BadRequestError('Карточка не найдена');
 
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(updatedCard);
   } catch (err: any) {
     if (err.name === 'CastError') throw new BadRequestError('Некорректные данные');
-    else next(err);
+
+    return next(err);
   }
 };
 
@@ -85,6 +92,7 @@ export const dislikeCard = async (req: AuthenticatedRequest, res: Response, next
     return res.status(HTTP_STATUS_CODE.SUCCESS).send(updatedCard);
   } catch (err: any) {
     if (err.name === 'ValidationError') throw new BadRequestError('Некорректные данные');
-    else next(err);
+
+    return next(err);
   }
 };
